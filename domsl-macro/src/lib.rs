@@ -26,16 +26,16 @@ fn run(input: TokenStream) -> Result<TokenStream, Error> {
     let ty_cast = match &item {
         SnaxItem::Tag(tag) => {
             let ty = element_type(&tag.name)?;
-            quote! { .dyn_into::<web_sys::#ty>() }
+            quote! { .dyn_into::<web_sys::#ty>().unwrap() }
         }
         SnaxItem::SelfClosingTag(tag) => {
             let ty = element_type(&tag.name)?;
-            quote! { .dyn_into::<web_sys::#ty>() }
+            quote! { .dyn_into::<web_sys::#ty>().unwrap() }
         }
 
-        // The expression already evaluates to the correct type
+        // The expressions already evaluates to the correct type.
         SnaxItem::Fragment(_) => quote! {},
-        SnaxItem::Content(_) => unimplemented!(),
+        SnaxItem::Content(_) => quote! {},
     };
 
     let gen_code = gen(&item)?;
@@ -44,7 +44,7 @@ fn run(input: TokenStream) -> Result<TokenStream, Error> {
         use web_sys::{Document};
         use domsl::IntoNode;
 
-        let document: Document = #document;
+        let document: &Document = &*&#document;
 
         #gen_code #ty_cast
     }};
