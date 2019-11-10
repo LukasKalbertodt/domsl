@@ -35,7 +35,7 @@ impl From<snax::ParseError> for Error {
                 Self::spanless(&format!("unexpected item {:?}", html_token))
             }
             snax::ParseError::UnexpectedToken(tt) => {
-                Self::new(tt.span(), &format!("unexpected token {:?}", tt))
+                Self::new(tt.span(), &format!("unexpected token `{}`", tt))
             }
         }
     }
