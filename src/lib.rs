@@ -106,8 +106,18 @@ fn gen(item: &SnaxItem) -> Result<TokenStream, Error> {
             }}
         }
         SnaxItem::Fragment(fragment) => {
-            println!("frag: {:?}", fragment);
-            quote! {}
+            let add_children = fragment.children.iter().map(|c| {
+                let child = gen(c)?;
+                Ok(quote! {
+                    fragment.append_child(&#child.into()).unwrap();
+                })
+            }).collect::<Result<TokenStream, Error>>()?;
+
+            quote! {{
+                let fragment = document.create_document_fragment();
+                #add_children
+                fragment
+            }}
         }
         SnaxItem::Content(tt) => {
             println!("tt: {:?}", tt);
