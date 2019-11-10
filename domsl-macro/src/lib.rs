@@ -89,12 +89,7 @@ fn gen(item: &SnaxItem) -> Result<TokenStream, Error> {
             check_name(&tag.name)?;
             let name = tag.name.to_string();
             let set_attrs = set_attributes(&tag.attributes)?;
-            let add_children = tag.children.iter().map(|c| {
-                let child = gen(c)?;
-                Ok(quote! {
-                    elem.append_child(&#child.into()).unwrap();
-                })
-            }).collect::<Result<TokenStream, Error>>()?;
+            let add_children = add_children(&tag.children)?;
 
             quote! {{
                 // This only fails if we pass in a name with incorrect
@@ -121,17 +116,12 @@ fn gen(item: &SnaxItem) -> Result<TokenStream, Error> {
             }}
         }
         SnaxItem::Fragment(fragment) => {
-            let add_children = fragment.children.iter().map(|c| {
-                let child = gen(c)?;
-                Ok(quote! {
-                    fragment.append_child(&#child.into()).unwrap();
-                })
-            }).collect::<Result<TokenStream, Error>>()?;
+            let add_children = add_children(&fragment.children)?;
 
             quote! {{
-                let fragment = document.create_document_fragment();
+                let node = document.create_document_fragment();
                 #add_children
-                fragment
+                web_sys::Node::from(node)
             }}
         }
         SnaxItem::Content(tt) => {
@@ -159,6 +149,13 @@ fn set_attributes(attrs: &[SnaxAttribute]) -> Result<TokenStream, Error> {
                 })
             }
         }
+    }).collect()
+}
+
+fn add_children(children: &[SnaxItem]) -> Result<TokenStream, Error> {
+    children.iter().map(|c| {
+        let child = gen(c)?;
+        Ok(quote! { node.append_child(&#child).unwrap(); })
     }).collect()
 }
 
