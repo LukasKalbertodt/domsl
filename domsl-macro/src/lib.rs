@@ -129,7 +129,7 @@ fn gen(item: &SnaxItem) -> Result<TokenStream, Error> {
         }
         SnaxItem::Content(tt) => {
             quote! {{
-                (#tt).domsl_into_node()
+                (#tt).domsl_into_node(&document)
             }}
         }
     };
