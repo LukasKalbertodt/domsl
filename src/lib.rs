@@ -1,6 +1,6 @@
 extern crate proc_macro;
 
-use proc_macro2::{Ident, Spacing, TokenStream, TokenTree};
+use proc_macro2::{Ident, Spacing, Span, TokenStream, TokenTree};
 use quote::quote;
 use snax::{SnaxAttribute, SnaxItem};
 
@@ -23,6 +23,21 @@ fn run(input: TokenStream) -> Result<TokenStream, Error> {
     let (document, body) = parse_outer(input)?;
     let item = snax::parse(body.into())?;
 
+    let ty_cast = match &item {
+        SnaxItem::Tag(tag) => {
+            let ty = element_type(&tag.name)?;
+            quote! { .dyn_into::<web_sys::#ty>() }
+        }
+        SnaxItem::SelfClosingTag(tag) => {
+            let ty = element_type(&tag.name)?;
+            quote! { .dyn_into::<web_sys::#ty>() }
+        }
+
+        // The expression already evaluates to the correct type
+        SnaxItem::Fragment(_) => quote! {},
+        SnaxItem::Content(_) => unimplemented!(),
+    };
+
     let gen_code = gen(&item)?;
     let out = quote! {{
         use wasm_bindgen::prelude::*;
@@ -30,7 +45,7 @@ fn run(input: TokenStream) -> Result<TokenStream, Error> {
 
         let document: Document = #document;
 
-        #gen_code
+        #gen_code #ty_cast
     }};
 
     Ok(out)
@@ -153,7 +168,36 @@ fn check_attribute_name(_name: &Ident) -> Result<(), Error> {
     Ok(())
 }
 
-fn check_name(_name: &Ident) -> Result<(), Error> {
-    // TODO
-    Ok(())
+fn check_name(name: &Ident) -> Result<(), Error> {
+    element_type(name).map(|_| ())
+}
+
+fn element_type(name: &Ident) -> Result<Ident, Error> {
+    let type_name = match name.to_string().as_str() {
+        "address" | "article" | "aside" | "b" | "code" | "dd" | "dt" | "figcaption"
+            | "figure" | "footer" | "header" | "hgroup" | "i" | "main" | "nav"
+            | "section" | "u" => "HtmlElement",
+
+        "a" => "HtmlAnchorElement",
+        "br" => "HtmlBrElement",
+        "div" => "HtmlDivElement",
+        "h1" | "h2" | "h3" | "h4" | "h5" | "h6" => "HtmlHeadingElement",
+        "li" => "HtmlLiElement",
+        "ol" => "HtmlOlListElement",
+        "p" => "HtmlParagraphElement",
+        "pre" => "HtmlPreElement",
+        "span" => "HtmlSpanElement",
+        "ul" => "HtmlUlListElement",
+
+        // TODO: obviously, lots are missing still. This is a good list of all
+        // tags: https://developer.mozilla.org/en-US/docs/Web/HTML/Element
+        //
+        // We might want to error on deprecated tags.
+
+        _ => {
+            return Err(Error::new(name.span(), &format!("unknown HTML tag `{}`", name)));
+        }
+    };
+
+    Ok(Ident::new(type_name, Span::call_site()))
 }

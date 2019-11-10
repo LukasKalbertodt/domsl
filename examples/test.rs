@@ -1,6 +1,6 @@
 #![feature(proc_macro_hygiene)]
 
-use jsx::jsx;
+use domsl::jsx;
 
 fn main() {
     let window = web_sys::window().unwrap();

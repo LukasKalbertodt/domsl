@@ -24,6 +24,7 @@ features = [
   'Document',
   'Element',
   'HtmlElement',
+  'HtmlDivElement',
   'HtmlTextAreaElement',
   'Node',
   'Window',
