@@ -42,6 +42,7 @@ fn run(input: TokenStream) -> Result<TokenStream, Error> {
     let out = quote! {{
         use wasm_bindgen::prelude::*;
         use web_sys::{Document};
+        use domsl::IntoNode;
 
         let document: Document = #document;
 
@@ -83,6 +84,8 @@ fn parse_outer(input: TokenStream) -> Result<(Ident, TokenStream), Error> {
     Ok((document, body))
 }
 
+/// Generates an expression that creates a `web_sys::Node` representing the
+/// given `item`.
 fn gen(item: &SnaxItem) -> Result<TokenStream, Error> {
     let tokens = match item {
         SnaxItem::Tag(tag) => {
@@ -95,10 +98,10 @@ fn gen(item: &SnaxItem) -> Result<TokenStream, Error> {
                 // This only fails if we pass in a name with incorrect
                 // characters, like space. We assure that this is not the case
                 // in `check_name`.
-                let elem = document.create_element(#name).unwrap();
+                let node = document.create_element(#name).unwrap();
                 #set_attrs
                 #add_children
-                elem
+                web_sys::Node::from(node)
             }}
         }
         SnaxItem::SelfClosingTag(tag) => {
@@ -110,9 +113,9 @@ fn gen(item: &SnaxItem) -> Result<TokenStream, Error> {
                 // This only fails if we pass in a name with incorrect
                 // characters, like space. We assure that this is not the case
                 // in `check_name`.
-                let elem = document.create_element(#name).unwrap();
+                let node = document.create_element(#name).unwrap();
                 #set_attrs
-                elem
+                web_sys::Node::from(node)
             }}
         }
         SnaxItem::Fragment(fragment) => {
@@ -125,7 +128,9 @@ fn gen(item: &SnaxItem) -> Result<TokenStream, Error> {
             }}
         }
         SnaxItem::Content(tt) => {
-            unimplemented!()
+            quote! {{
+                (#tt).domsl_into_node()
+            }}
         }
     };
 
@@ -145,7 +150,7 @@ fn set_attributes(attrs: &[SnaxAttribute]) -> Result<TokenStream, Error> {
                     //
                     // TODO: The `to_string()` here is useless for string
                     // literals. Those should be special cased.
-                    elem.set_attribute(#name, &#value.to_string()).unwrap();
+                    node.set_attribute(#name, &#value.to_string()).unwrap();
                 })
             }
         }

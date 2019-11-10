@@ -7,8 +7,11 @@ fn main() {
     let document = window.document().unwrap();
 
     jsx!(document => {
+        <>
         <div class="baz">
             <br foo={ 3 + 7 } />
         </div>
+        <span>"hi"</span>
+        </>
     });
 }
