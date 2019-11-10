@@ -6,9 +6,9 @@ pub trait IntoNode {
     fn domsl_into_node(self, document: &Document) -> Node;
 }
 
-impl IntoNode for Node {
+impl IntoNode for &Node {
     fn domsl_into_node(self, _: &Document) -> Node {
-        self
+        self.clone()
     }
 }
 
