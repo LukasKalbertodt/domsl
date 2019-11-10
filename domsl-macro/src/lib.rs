@@ -1,7 +1,7 @@
 extern crate proc_macro;
 
 use proc_macro2::{Ident, Spacing, Span, TokenStream, TokenTree};
-use quote::quote;
+use quote::{quote, quote_spanned};
 use snax::{SnaxAttribute, SnaxItem};
 
 use crate::{
@@ -144,13 +144,35 @@ fn set_attributes(attrs: &[SnaxAttribute]) -> Result<TokenStream, Error> {
                 check_attribute_name(name)?;
 
                 let name = name.to_string();
+                let value = match value {
+                    // If the token tree is a string literal, we don't need to
+                    // call `to_string()`.
+                    //
+                    // TODO: make this check a bit more robust.
+                    TokenTree::Literal(lit) if lit.to_string().starts_with("\"") => {
+                        quote ! { #lit }
+                    }
+                    other => {
+                        // We generate this helper function to make sure
+                        // `other` implements `Display`. By using its span, the
+                        // user gets good error message if `Display` is not
+                        // implemented.
+                        let helper = quote_spanned!(other.span()=>
+                            fn helper() -> impl std::fmt::Display { #other }
+                        );
+                        quote! {
+                            &{
+                                #helper
+                                helper().to_string()
+                            }
+                        }
+                    }
+                };
+
                 Ok(quote! {
                     // This only errors if 'name' contains illegal characters
                     // which we check in `check_attribute_name`.
-                    //
-                    // TODO: The `to_string()` here is useless for string
-                    // literals. Those should be special cased.
-                    node.set_attribute(#name, &#value.to_string()).unwrap();
+                    node.set_attribute(#name, #value).unwrap();
                 })
             }
         }
