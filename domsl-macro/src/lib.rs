@@ -40,7 +40,7 @@ fn run(input: TokenStream) -> Result<TokenStream, Error> {
 
     let gen_code = gen(&item)?;
     let out = quote! {{
-        use wasm_bindgen::prelude::*;
+        use wasm_bindgen::{prelude::*, JsCast};
         use web_sys::{Document};
         use domsl::IntoNode;
 
