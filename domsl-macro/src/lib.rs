@@ -44,7 +44,7 @@ fn run(input: TokenStream) -> Result<TokenStream, Error> {
         use web_sys::{Document};
         use domsl::IntoNode;
 
-        let document: &Document = &*&#document;
+        let #DOCUMENT_IDENT: &Document = &*&#document;
 
         #gen_code #ty_cast
     }};
@@ -98,10 +98,10 @@ fn gen(item: &SnaxItem) -> Result<TokenStream, Error> {
                 // This only fails if we pass in a name with incorrect
                 // characters, like space. We assure that this is not the case
                 // in `check_name`.
-                let node = document.create_element(#name).unwrap();
+                let #NODE_IDENT = #DOCUMENT_IDENT.create_element(#name).unwrap();
                 #set_attrs
                 #add_children
-                web_sys::Node::from(node)
+                web_sys::Node::from(#NODE_IDENT)
             }}
         }
         SnaxItem::SelfClosingTag(tag) => {
@@ -113,23 +113,23 @@ fn gen(item: &SnaxItem) -> Result<TokenStream, Error> {
                 // This only fails if we pass in a name with incorrect
                 // characters, like space. We assure that this is not the case
                 // in `check_name`.
-                let node = document.create_element(#name).unwrap();
+                let #NODE_IDENT = #DOCUMENT_IDENT.create_element(#name).unwrap();
                 #set_attrs
-                web_sys::Node::from(node)
+                web_sys::Node::from(#NODE_IDENT)
             }}
         }
         SnaxItem::Fragment(fragment) => {
             let add_children = add_children(&fragment.children)?;
 
             quote! {{
-                let node = document.create_document_fragment();
+                let #NODE_IDENT = #DOCUMENT_IDENT.create_document_fragment();
                 #add_children
-                web_sys::Node::from(node)
+                web_sys::Node::from(#NODE_IDENT)
             }}
         }
         SnaxItem::Content(tt) => {
             quote! {{
-                (#tt).domsl_into_node(&document)
+                (#tt).domsl_into_node(&#DOCUMENT_IDENT)
             }}
         }
     };
@@ -158,12 +158,12 @@ fn set_attributes(attrs: &[SnaxAttribute]) -> Result<TokenStream, Error> {
                         // user gets good error message if `Display` is not
                         // implemented.
                         let helper = quote_spanned!(other.span()=>
-                            fn helper() -> impl std::fmt::Display { #other }
+                            fn #HELPER_IDENT() -> impl std::fmt::Display { #other }
                         );
                         quote! {
                             &{
                                 #helper
-                                helper().to_string()
+                                #HELPER_IDENT().to_string()
                             }
                         }
                     }
@@ -172,7 +172,7 @@ fn set_attributes(attrs: &[SnaxAttribute]) -> Result<TokenStream, Error> {
                 Ok(quote! {
                     // This only errors if 'name' contains illegal characters
                     // which we check in `check_attribute_name`.
-                    node.set_attribute(#name, #value).unwrap();
+                    #NODE_IDENT.set_attribute(#name, #value).unwrap();
                 })
             }
         }
@@ -182,7 +182,7 @@ fn set_attributes(attrs: &[SnaxAttribute]) -> Result<TokenStream, Error> {
 fn add_children(children: &[SnaxItem]) -> Result<TokenStream, Error> {
     children.iter().map(|c| {
         let child = gen(c)?;
-        Ok(quote! { node.append_child(&#child).unwrap(); })
+        Ok(quote! { #NODE_IDENT.append_child(&#child).unwrap(); })
     }).collect()
 }
 
@@ -223,4 +223,27 @@ fn element_type(name: &Ident) -> Result<Ident, Error> {
     };
 
     Ok(Ident::new(type_name, Span::call_site()))
+}
+
+
+const NODE_IDENT: DomslIdent = DomslIdent("__domsl_node");
+const DOCUMENT_IDENT: DomslIdent = DomslIdent("__domsl_document");
+const HELPER_IDENT: DomslIdent = DomslIdent("__domsl_helper");
+
+/// This is a small helper type that can be constructed as const-fn and
+/// implements `ToTokens`.
+///
+/// Unfortunately, hygiene is not stable for proc macros yet. So we need to use
+/// terrible identifier in the code we emit to make clashes very unlikely. To
+/// not repeat the strange identifiers in each `quote!` invocation, we would
+/// like to have global constants for them. But we can't have them of type
+/// `Ident` because `Ident::new` is not a const-fn and  because `lazy_static`
+/// or `thread_local` doesnt work as they rely on deref-coercion to work.
+/// That's what this type is for.
+struct DomslIdent(&'static str);
+
+impl quote::ToTokens for DomslIdent {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        Ident::new(self.0, Span::call_site()).to_tokens(tokens)
+    }
 }
