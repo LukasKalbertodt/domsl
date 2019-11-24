@@ -6,12 +6,22 @@ fn main() {
     let window = web_sys::window().unwrap();
     let document = window.document().unwrap();
 
+    let node = jsx!(document => {
+        <p>"Hello"</p>
+    });
+    let s1 = "hello";
+    let s2 = String::from("hello");
+    let v = vec![
+        jsx!(document => { <p>"p1"</p> }),
+        jsx!(document => { <p>"p2"</p> }),
+    ];
+
     jsx!(document => {
-        <>
         <div class="baz">
-            <br foo={ 3 + 7 } />
+            { node }
+            <div>{ s1 }</div>
+            <div>{ s2 }</div>
+            <div>{ v }</div>
         </div>
-        <span>"hi"</span>
-        </>
     });
 }

@@ -42,7 +42,7 @@ fn run(input: TokenStream) -> Result<TokenStream, Error> {
     let out = quote! {{
         use wasm_bindgen::{prelude::*, JsCast};
         use web_sys::{Document};
-        use domsl::IntoNode;
+        use domsl::hidden::{AsStrKind, NodeKind, DisplayKind, IterNodeKind, Wrap};
 
         let #DOCUMENT_IDENT: &Document = &*&#document;
 
@@ -129,7 +129,9 @@ fn gen(item: &SnaxItem) -> Result<TokenStream, Error> {
         }
         SnaxItem::Content(tt) => {
             quote! {{
-                (#tt).domsl_into_node(&#DOCUMENT_IDENT)
+                let #TMP_IDENT = (#tt);
+                (&&&&&&&&Wrap(&#TMP_IDENT)).domsl_into_nodes()
+                    .into_node(#TMP_IDENT, &#DOCUMENT_IDENT)
             }}
         }
     };
@@ -229,6 +231,7 @@ fn element_type(name: &Ident) -> Result<Ident, Error> {
 const NODE_IDENT: DomslIdent = DomslIdent("__domsl_node");
 const DOCUMENT_IDENT: DomslIdent = DomslIdent("__domsl_document");
 const HELPER_IDENT: DomslIdent = DomslIdent("__domsl_helper");
+const TMP_IDENT: DomslIdent = DomslIdent("__domsl_tmp");
 
 /// This is a small helper type that can be constructed as const-fn and
 /// implements `ToTokens`.
