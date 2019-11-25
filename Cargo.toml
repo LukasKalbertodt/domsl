@@ -10,6 +10,9 @@ publish = false
 domsl-macro = { path = "domsl-macro" }
 wasm-bindgen = "0.2.50"
 
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
+
 [dependencies.web-sys]
 version = "0.3.4"
 features = [
@@ -23,6 +26,7 @@ version = "0.3.4"
 features = [
   'Document',
   'Element',
+  'HtmlCollection',
   'HtmlElement',
   'HtmlDivElement',
   'HtmlParagraphElement',

@@ -1,7 +1,27 @@
-`domsl`
-=======
+# `domsl`
+
 
 TODO.
+
+
+## Contributing
+
+TODO
+
+**Running the tests**
+
+As the tests require a full JS environment with DOM, you unfortunately can't run the tests as you would run other tests.
+But it's not too difficult, either!
+You need `wasm-pack` and either Firefox, Chrome or Safari.
+You can then simply execute this:
+
+```
+wasm-pack test --headless --firefox  # or --chrome or --safari
+```
+
+This command should install missing tools, prepare everything and finally run all tests in a headless browser.
+
+
 
 ---
 
