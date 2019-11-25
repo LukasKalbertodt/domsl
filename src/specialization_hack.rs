@@ -3,7 +3,7 @@
 //!
 //! If you are a user of `domsl`, you probably only care about the "easy"
 //! explanation relevant for users. In that case, please refer to
-//! [`IntoNodes`][crate::IntoNodes]. However, if you are here for the gory
+//! [`IntoNode`][crate::IntoNode]. However, if you are here for the gory
 //! details of this hack, feel free to poke around. The general technique was
 //! first described by dtolnay in [this document][1]. To use it for more than
 //! two impls and for more trait bounds, the technique needed some slight
