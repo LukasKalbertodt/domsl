@@ -22,6 +22,8 @@ fn main() {
             <div>{ s1 }</div>
             <div>{ s2 }</div>
             <div>{ v }</div>
+            <div>{ vec!["hi"] }</div>
+            <div>{ vec![1, 2, 3] }</div>
         </div>
     });
 }

@@ -42,7 +42,9 @@ fn run(input: TokenStream) -> Result<TokenStream, Error> {
     let out = quote! {{
         use wasm_bindgen::{prelude::*, JsCast};
         use web_sys::{Document};
-        use domsl::hidden::{AsStrKind, NodeKind, DisplayKind, IterNodeKind, Wrap};
+        use domsl::specialization_hack::{
+            AsStrKind, NodeKind, DisplayKind, IterDisplayKind, IterNodeKind, IterStrKind, Wrap,
+        };
 
         let #DOCUMENT_IDENT: &Document = &*&#document;
 
@@ -130,7 +132,7 @@ fn gen(item: &SnaxItem) -> Result<TokenStream, Error> {
         SnaxItem::Content(tt) => {
             quote! {{
                 let #TMP_IDENT = (#tt);
-                (&&&&&&&&Wrap(&#TMP_IDENT)).domsl_into_nodes()
+                (&&&&&&&&&&&&Wrap(&#TMP_IDENT)).domsl_into_node()
                     .into_node(#TMP_IDENT, &#DOCUMENT_IDENT)
             }}
         }
