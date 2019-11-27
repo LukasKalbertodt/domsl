@@ -1,11 +1,11 @@
 mod tags;
 
-use proc_macro2::Ident;
+use proc_macro2::{Ident, Span};
 
 use crate::{
     error::Error,
 };
-pub(crate) use tags::TAG_INFOS;
+pub(crate) use tags::{GLOBAL_ATTRIBUTES, TAG_INFOS};
 
 
 /// Information about a specific tag.
@@ -56,6 +56,19 @@ impl TagInfo {
             .binary_search_by_key(&name.to_string().as_str(), |info| info.name)
             .map(|pos| &TAG_INFOS[pos])
             .map_err(|_| Error::unknown_tag(name))
+    }
+
+    pub(crate) fn type_ident(&self) -> Ident {
+        Ident::new(self.ty, Span::call_site())
+    }
+
+    pub(crate) fn check_attribute(&self, attr: &Ident) -> Result<(), Error> {
+        let s = &*attr.to_string();
+        if !self.attributes.contains(&s) && !GLOBAL_ATTRIBUTES.contains(&s) {
+            Err(Error::invalid_attr(attr, self.name))
+        } else {
+            Ok(())
+        }
     }
 }
 

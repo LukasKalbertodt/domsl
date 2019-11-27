@@ -9,7 +9,9 @@ pub(crate) struct Error {
 impl Error {
     pub(crate) fn new(span: Span, msg: &str) -> Self {
         let error_tokens = quote_spanned! {span=>
-            compile_error!(#msg);
+            {
+                compile_error!(#msg);
+            }
         };
         Self { error_tokens }
     }
@@ -31,6 +33,17 @@ impl Error {
             tag.span(),
             &format!(
                 "unknown HTML tag '<{}>' (maybe you meant to capitalize it to call a component?)",
+                tag,
+            ),
+        )
+    }
+
+    pub(crate) fn invalid_attr(attr: &Ident, tag: &str) -> Self {
+        Self::new(
+            attr.span(),
+            &format!(
+                "attribute '{}' is not valid on HTML tag '<{}>'",
+                attr,
                 tag,
             ),
         )

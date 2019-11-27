@@ -6,16 +6,21 @@ use super::{ContentModel::*, Child::*, TagInfo};
 /// All global HTML attributes as specified by the standard chapter 3.2.6.
 ///
 ///     https://html.spec.whatwg.org/#global-attributes
+///
+/// Additionally, 'id' and 'class' are added, as those are (for some reason)
+/// not in that list of the HTML standard.
 #[allow(dead_code)] // TODO
 pub(crate) const GLOBAL_ATTRIBUTES: &[&str] = &[
     "accesskey",
     "autocapitalize",
     "autofocus",
+    "class",
     "contenteditable",
     "dir",
     "draggable",
     "enterkeyhint",
     "hidden",
+    "id",
     "inputmode",
     "is",
     "itemid",

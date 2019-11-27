@@ -8,15 +8,16 @@ use crate::{
 };
 
 
+/// The main entry point to generate the output code.
 pub(crate) fn gen(root: &SnaxItem, document: &Ident) -> Result<TokenStream, Error> {
     // We need to cast the outer most element appropriately.
     let ty_cast = match &root {
         SnaxItem::Tag(tag) => {
-            let ty = TagInfo::from_name(&tag.name)?.ty;
+            let ty = TagInfo::from_name(&tag.name)?.type_ident();
             quote! { .dyn_into::<web_sys::#ty>().unwrap() }
         }
         SnaxItem::SelfClosingTag(tag) => {
-            let ty = TagInfo::from_name(&tag.name)?.ty;
+            let ty = TagInfo::from_name(&tag.name)?.type_ident();
             quote! { .dyn_into::<web_sys::#ty>().unwrap() }
         }
 
@@ -25,6 +26,7 @@ pub(crate) fn gen(root: &SnaxItem, document: &Ident) -> Result<TokenStream, Erro
         SnaxItem::Content(_) => quote! {},
     };
 
+    // Generate code for the root item and put it all together.
     let gen_code = gen_item(&root)?;
     let out = quote! {{
         use wasm_bindgen::{prelude::*, JsCast};
@@ -75,7 +77,7 @@ fn gen_tag(
 ) -> Result<TokenStream, Error> {
     let info = TagInfo::from_name(&name)?;
     let name_string = name.to_string();
-    let set_attrs = set_attributes(&attributes)?;
+    let set_attrs = set_attributes(&attributes, &info)?;
     let add_children = add_children(&children)?;
 
     Ok(quote! {{
@@ -88,11 +90,11 @@ fn gen_tag(
     }})
 }
 
-fn set_attributes(attrs: &[SnaxAttribute]) -> Result<TokenStream, Error> {
+fn set_attributes(attrs: &[SnaxAttribute], info: &TagInfo) -> Result<TokenStream, Error> {
     attrs.iter().map(|attr| {
         match attr {
             SnaxAttribute::Simple { name, value } => {
-                check_attribute_name(name)?;
+                info.check_attribute(name)?;
 
                 let name = name.to_string();
                 let value = match value {
@@ -135,11 +137,6 @@ fn add_children(children: &[SnaxItem]) -> Result<TokenStream, Error> {
         let child = gen_item(c)?;
         Ok(quote! { #NODE_IDENT.append_child(&#child).unwrap(); })
     }).collect()
-}
-
-fn check_attribute_name(_name: &Ident) -> Result<(), Error> {
-    // TODO
-    Ok(())
 }
 
 
