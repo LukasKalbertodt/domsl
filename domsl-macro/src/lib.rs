@@ -9,6 +9,7 @@ use crate::{
 };
 
 mod error;
+mod html;
 
 
 
