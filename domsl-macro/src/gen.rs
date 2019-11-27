@@ -75,6 +75,18 @@ fn gen_tag(
     attributes: &[SnaxAttribute],
     children: &[SnaxItem],
 ) -> Result<TokenStream, Error> {
+    if name.to_string().chars().nth(0).expect("zero length ident").is_lowercase() {
+        gen_html_tag(name, attributes, children)
+    } else {
+        gen_component(name, attributes, children)
+    }
+}
+
+fn gen_html_tag(
+    name: &Ident,
+    attributes: &[SnaxAttribute],
+    children: &[SnaxItem],
+) -> Result<TokenStream, Error> {
     let info = TagInfo::from_name(&name)?;
     let name_string = name.to_string();
     let set_attrs = set_attributes(&attributes, &info)?;
@@ -88,6 +100,14 @@ fn gen_tag(
         #add_children
         web_sys::Node::from(#NODE_IDENT)
     }})
+}
+
+fn gen_component(
+    name: &Ident,
+    attributes: &[SnaxAttribute],
+    children: &[SnaxItem],
+) -> Result<TokenStream, Error> {
+    unimplemented!()
 }
 
 fn set_attributes(attrs: &[SnaxAttribute], info: &TagInfo) -> Result<TokenStream, Error> {
