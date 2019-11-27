@@ -1,6 +1,6 @@
 use proc_macro2::{Ident, Span, TokenStream, TokenTree};
 use quote::{quote, quote_spanned};
-use snax::{SnaxAttribute, SnaxItem};
+use snax::{SnaxAttribute, SnaxItem, SnaxTag, SnaxSelfClosingTag};
 
 use crate::{
     error::Error,
@@ -12,13 +12,16 @@ use crate::{
 pub(crate) fn gen(root: &SnaxItem, document: &Ident) -> Result<TokenStream, Error> {
     // We need to cast the outer most element appropriately.
     let ty_cast = match &root {
-        SnaxItem::Tag(tag) => {
-            let ty = TagInfo::from_name(&tag.name)?.type_ident();
-            quote! { .dyn_into::<web_sys::#ty>().unwrap() }
-        }
-        SnaxItem::SelfClosingTag(tag) => {
-            let ty = TagInfo::from_name(&tag.name)?.type_ident();
-            quote! { .dyn_into::<web_sys::#ty>().unwrap() }
+        SnaxItem::Tag(SnaxTag { name, ..})
+            | SnaxItem::SelfClosingTag(SnaxSelfClosingTag { name, .. }) =>
+        {
+            if starts_lowercase(name) {
+                let ty = TagInfo::from_name(&name)?.type_ident();
+                quote! { .dyn_into::<web_sys::#ty>().unwrap() }
+            } else {
+                // Components already return the correct type
+                quote! {}
+            }
         }
 
         // The expressions already evaluates to the correct type.
@@ -31,8 +34,10 @@ pub(crate) fn gen(root: &SnaxItem, document: &Ident) -> Result<TokenStream, Erro
     let out = quote! {{
         use wasm_bindgen::{prelude::*, JsCast};
         use web_sys::{Document};
-        use domsl::specialization_hack::{
-            AsStrKind, NodeKind, DisplayKind, IterDisplayKind, IterNodeKind, IterStrKind, Wrap,
+        use domsl::{
+            specialization_hack::{
+                AsStrKind, NodeKind, DisplayKind, IterDisplayKind, IterNodeKind, IterStrKind, Wrap,
+            }
         };
 
         let #DOCUMENT_IDENT: &Document = &*&#document;
@@ -75,7 +80,7 @@ fn gen_tag(
     attributes: &[SnaxAttribute],
     children: &[SnaxItem],
 ) -> Result<TokenStream, Error> {
-    if name.to_string().chars().nth(0).expect("zero length ident").is_lowercase() {
+    if starts_lowercase(name) {
         gen_html_tag(name, attributes, children)
     } else {
         gen_component(name, attributes, children)
@@ -107,7 +112,38 @@ fn gen_component(
     attributes: &[SnaxAttribute],
     children: &[SnaxItem],
 ) -> Result<TokenStream, Error> {
-    unimplemented!()
+    let component = {
+        let fields = attributes.iter().map(|attr| {
+            match attr {
+                SnaxAttribute::Simple { name, value } => quote! { #name: #value },
+            }
+        });
+
+        quote! {
+            #name { #( #fields ),* }
+        }
+    };
+
+    let children_vec = {
+        let nodes = children.iter().map(|c| gen_item(c)).collect::<Result<Vec<_>, _>>()?;
+        quote! {
+            vec![ #( #nodes ),* ]
+        }
+    };
+
+    let render_call = quote_spanned!(name.span()=>
+        ::domsl::Component::render
+    );
+
+    Ok(quote! {
+        web_sys::Node::from(
+            #render_call(
+                #component,
+                #DOCUMENT_IDENT,
+                #children_vec,
+            )
+        )
+    })
 }
 
 fn set_attributes(attrs: &[SnaxAttribute], info: &TagInfo) -> Result<TokenStream, Error> {
@@ -181,4 +217,8 @@ impl quote::ToTokens for DomslIdent {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         Ident::new(self.0, Span::call_site()).to_tokens(tokens)
     }
+}
+
+fn starts_lowercase(tag: &Ident) -> bool {
+    tag.to_string().chars().nth(0).expect("zero length ident").is_lowercase()
 }

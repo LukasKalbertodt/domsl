@@ -1,29 +1,23 @@
 #![feature(proc_macro_hygiene)]
 
-use domsl::jsx;
+use domsl::{jsx, Component};
+use web_sys::{Document, Node};
 
 fn main() {
     let window = web_sys::window().unwrap();
     let document = window.document().unwrap();
 
     let node = jsx!(document => {
-        <p>"Hello"</p>
+        <Foo>"Hello"</Foo>
     });
-    let s1 = "hello";
-    let s2 = String::from("hello");
-    let v = vec![
-        jsx!(document => { <p>"p1"</p> }),
-        jsx!(document => { <p>"p2"</p> }),
-    ];
+}
 
-    jsx!(document => {
-        <div class="baz">
-            { node }
-            <div>{ s1 }</div>
-            <div>{ s2 }</div>
-            <div>{ v }</div>
-            <div>{ vec!["hi"] }</div>
-            <div>{ vec![1, 2, 3] }</div>
-        </div>
-    });
+struct Foo {}
+impl Component for Foo {
+    type Node = web_sys::HtmlParagraphElement;
+    fn render(self, document: &Document, children: Vec<Node>) -> Self::Node {
+        jsx!(document => {
+            <p style="color: red">{ children }</p>
+        })
+    }
 }

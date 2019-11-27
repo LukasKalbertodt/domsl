@@ -1,6 +1,6 @@
 #![feature(associated_type_bounds)]
 
-use web_sys::Document;
+use web_sys::{Document, Node};
 
 
 pub mod specialization_hack;
@@ -8,9 +8,10 @@ pub mod specialization_hack;
 pub use domsl_macro::jsx;
 
 
-// pub trait Component {
-//     fn render(&self, document: &Document, children: Vec<Node>) -> Node;
-// }
+pub trait Component {
+    type Node: Into<Node>;
+    fn render(self, document: &Document, children: Vec<Node>) -> Self::Node;
+}
 
 
 
