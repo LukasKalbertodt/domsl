@@ -1,4 +1,4 @@
-use proc_macro2::{Span, TokenStream, TokenTree};
+use proc_macro2::{Ident, Span, TokenStream, TokenTree};
 use quote::quote_spanned;
 
 
@@ -24,6 +24,16 @@ impl Error {
 
     pub(crate) fn eof() -> Self {
         Self::spanless("unexpected end of input (forgot to close tag?)")
+    }
+
+    pub(crate) fn unknown_tag(tag: &Ident) -> Self {
+        Self::new(
+            tag.span(),
+            &format!(
+                "unknown HTML tag '<{}>' (maybe you meant to capitalize it to call a component?)",
+                tag,
+            ),
+        )
     }
 }
 

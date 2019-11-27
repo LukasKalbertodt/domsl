@@ -6,6 +6,7 @@ use snax::{SnaxAttribute, SnaxItem};
 
 use crate::{
     error::Error,
+    html::TagInfo,
 };
 
 mod error;
@@ -26,11 +27,11 @@ fn run(input: TokenStream) -> Result<TokenStream, Error> {
 
     let ty_cast = match &item {
         SnaxItem::Tag(tag) => {
-            let ty = element_type(&tag.name)?;
+            let ty = TagInfo::from_name(&tag.name)?.ty;
             quote! { .dyn_into::<web_sys::#ty>().unwrap() }
         }
         SnaxItem::SelfClosingTag(tag) => {
-            let ty = element_type(&tag.name)?;
+            let ty = TagInfo::from_name(&tag.name)?.ty;
             quote! { .dyn_into::<web_sys::#ty>().unwrap() }
         }
 
@@ -91,36 +92,8 @@ fn parse_outer(input: TokenStream) -> Result<(Ident, TokenStream), Error> {
 /// given `item`.
 fn gen(item: &SnaxItem) -> Result<TokenStream, Error> {
     let tokens = match item {
-        SnaxItem::Tag(tag) => {
-            check_name(&tag.name)?;
-            let name = tag.name.to_string();
-            let set_attrs = set_attributes(&tag.attributes)?;
-            let add_children = add_children(&tag.children)?;
-
-            quote! {{
-                // This only fails if we pass in a name with incorrect
-                // characters, like space. We assure that this is not the case
-                // in `check_name`.
-                let #NODE_IDENT = #DOCUMENT_IDENT.create_element(#name).unwrap();
-                #set_attrs
-                #add_children
-                web_sys::Node::from(#NODE_IDENT)
-            }}
-        }
-        SnaxItem::SelfClosingTag(tag) => {
-            check_name(&tag.name)?;
-            let name = tag.name.to_string();
-            let set_attrs = set_attributes(&tag.attributes)?;
-
-            quote! {{
-                // This only fails if we pass in a name with incorrect
-                // characters, like space. We assure that this is not the case
-                // in `check_name`.
-                let #NODE_IDENT = #DOCUMENT_IDENT.create_element(#name).unwrap();
-                #set_attrs
-                web_sys::Node::from(#NODE_IDENT)
-            }}
-        }
+        SnaxItem::Tag(tag) => gen_tag(&tag.name, &tag.attributes, &tag.children)?,
+        SnaxItem::SelfClosingTag(tag) => gen_tag(&tag.name, &tag.attributes, &[])?,
         SnaxItem::Fragment(fragment) => {
             let add_children = add_children(&fragment.children)?;
 
@@ -140,6 +113,26 @@ fn gen(item: &SnaxItem) -> Result<TokenStream, Error> {
     };
 
     Ok(tokens)
+}
+
+fn gen_tag(
+    name: &Ident,
+    attributes: &[SnaxAttribute],
+    children: &[SnaxItem],
+) -> Result<TokenStream, Error> {
+    let info = TagInfo::from_name(&name)?;
+    let name_string = name.to_string();
+    let set_attrs = set_attributes(&attributes)?;
+    let add_children = add_children(&children)?;
+
+    Ok(quote! {{
+        // This only fails if we pass in a name with incorrect characters, like
+        // spaces. We assure that this is not the case in `TagInfo::from_name`.
+        let #NODE_IDENT = #DOCUMENT_IDENT.create_element(#name_string).unwrap();
+        #set_attrs
+        #add_children
+        web_sys::Node::from(#NODE_IDENT)
+    }})
 }
 
 fn set_attributes(attrs: &[SnaxAttribute]) -> Result<TokenStream, Error> {
@@ -194,40 +187,6 @@ fn add_children(children: &[SnaxItem]) -> Result<TokenStream, Error> {
 fn check_attribute_name(_name: &Ident) -> Result<(), Error> {
     // TODO
     Ok(())
-}
-
-fn check_name(name: &Ident) -> Result<(), Error> {
-    element_type(name).map(|_| ())
-}
-
-fn element_type(name: &Ident) -> Result<Ident, Error> {
-    let type_name = match name.to_string().as_str() {
-        "address" | "article" | "aside" | "b" | "code" | "dd" | "dt" | "figcaption"
-            | "figure" | "footer" | "header" | "hgroup" | "i" | "main" | "nav"
-            | "section" | "u" => "HtmlElement",
-
-        "a" => "HtmlAnchorElement",
-        "br" => "HtmlBrElement",
-        "div" => "HtmlDivElement",
-        "h1" | "h2" | "h3" | "h4" | "h5" | "h6" => "HtmlHeadingElement",
-        "li" => "HtmlLiElement",
-        "ol" => "HtmlOlListElement",
-        "p" => "HtmlParagraphElement",
-        "pre" => "HtmlPreElement",
-        "span" => "HtmlSpanElement",
-        "ul" => "HtmlUlListElement",
-
-        // TODO: obviously, lots are missing still. This is a good list of all
-        // tags: https://developer.mozilla.org/en-US/docs/Web/HTML/Element
-        //
-        // We might want to error on deprecated tags.
-
-        _ => {
-            return Err(Error::new(name.span(), &format!("unknown HTML tag `{}`", name)));
-        }
-    };
-
-    Ok(Ident::new(type_name, Span::call_site()))
 }
 
 

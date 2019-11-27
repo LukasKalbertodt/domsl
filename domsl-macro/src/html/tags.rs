@@ -1,58 +1,12 @@
 //! This module holds data about the tags/elements defined in the HTML
 //! standard.
 
-/// Information about a specific tag.
-#[derive(Debug)]
-pub(crate) struct TagInfo {
-    /// The name of the tag. E.g. `a`, `br` or `img`.
-    name: &'static str,
-
-    /// The name of the type in `web_sys`. This closely correlates with the
-    /// "interface" in the HTML standard (only the casing is different).
-    ty: &'static str,
-
-    /// What content models the tag belongs to.
-    categories: &'static [ContentModel],
-
-    /// What kind of children are allowed in this tag.
-    children: &'static [Child],
-
-    /// What attributes are allowed on this tag. This only lists non-global
-    /// attributes. Every tag allows global attributes.
-    attributes: &'static [&'static str],
-}
-
-/// The main content models of HTML.
-#[derive(Debug, Clone, Copy)]
-pub(crate) enum ContentModel {
-    Metadata,
-    Flow,
-    Sectioning,
-    Heading,
-    Phrasing,
-    Embedded,
-    Interactive,
-}
-
-/// Specifies what kind of child is allowed for another tag.
-#[derive(Debug, Clone, Copy)]
-pub(crate) enum Child {
-    /// The same children are allowed in this tag as in the parent tag.
-    Transparent,
-
-    /// Text is allowed.
-    Text,
-
-    /// Elements of a specific content model are allowed
-    Model(ContentModel),
-
-    /// A specific tag is allowed.
-    Tag(&'static str),
-}
+use super::{ContentModel::*, Child::*, TagInfo};
 
 /// All global HTML attributes as specified by the standard chapter 3.2.6.
 ///
 ///     https://html.spec.whatwg.org/#global-attributes
+#[allow(dead_code)] // TODO
 pub(crate) const GLOBAL_ATTRIBUTES: &[&str] = &[
     "accesskey",
     "autocapitalize",
@@ -88,9 +42,6 @@ macro_rules! def_tags {
             [ $($attribute:literal),* ],
         },
     )* ]) => {
-        use ContentModel::*;
-        use Child::*;
-
         pub(crate) const $const_name: &[TagInfo] = &[ $(
             TagInfo {
                 name: stringify!($name),

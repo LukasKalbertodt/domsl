@@ -1,10 +1,17 @@
 #![feature(associated_type_bounds)]
 
+use web_sys::Document;
 
 
 pub mod specialization_hack;
 
 pub use domsl_macro::jsx;
+
+
+// pub trait Component {
+//     fn render(&self, document: &Document, children: Vec<Node>) -> Node;
+// }
+
 
 
 /// Types that can be represented by a DOM node. This trait is actually fake.
