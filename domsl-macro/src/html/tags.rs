@@ -1,3 +1,7 @@
+//! This module holds data about the tags/elements defined in the HTML
+//! standard.
+
+/// Information about a specific tag.
 #[derive(Debug)]
 pub(crate) struct TagInfo {
     /// The name of the tag. E.g. `a`, `br` or `img`.
@@ -7,13 +11,18 @@ pub(crate) struct TagInfo {
     /// "interface" in the HTML standard (only the casing is different).
     ty: &'static str,
 
+    /// What content models the tag belongs to.
     categories: &'static [ContentModel],
 
+    /// What kind of children are allowed in this tag.
     children: &'static [Child],
 
+    /// What attributes are allowed on this tag. This only lists non-global
+    /// attributes. Every tag allows global attributes.
     attributes: &'static [&'static str],
 }
 
+/// The main content models of HTML.
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum ContentModel {
     Metadata,
@@ -25,14 +34,52 @@ pub(crate) enum ContentModel {
     Interactive,
 }
 
+/// Specifies what kind of child is allowed for another tag.
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum Child {
+    /// The same children are allowed in this tag as in the parent tag.
     Transparent,
+
+    /// Text is allowed.
     Text,
+
+    /// Elements of a specific content model are allowed
     Model(ContentModel),
+
+    /// A specific tag is allowed.
     Tag(&'static str),
 }
 
+/// All global HTML attributes as specified by the standard chapter 3.2.6.
+///
+///     https://html.spec.whatwg.org/#global-attributes
+pub(crate) const GLOBAL_ATTRIBUTES: &[&str] = &[
+    "accesskey",
+    "autocapitalize",
+    "autofocus",
+    "contenteditable",
+    "dir",
+    "draggable",
+    "enterkeyhint",
+    "hidden",
+    "inputmode",
+    "is",
+    "itemid",
+    "itemprop",
+    "itemref",
+    "itemscope",
+    "itemtype",
+    "lang",
+    "nonce",
+    "spellcheck",
+    "style",
+    "tabindex",
+    "title",
+    "translate",
+];
+
+// The HTML tag data is specified in a custom syntax so that we can generate
+// different structures out of it.
 macro_rules! def_tags {
     ($const_name:ident; [ $(
         $name:ident: $ty:ident => {
