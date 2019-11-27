@@ -8,16 +8,18 @@ fn main() {
     let document = window.document().unwrap();
 
     let node = jsx!(document => {
-        <Foo>"Hello"</Foo>
+        <Foo color="red">"Hello"</Foo>
     });
 }
 
-struct Foo {}
+struct Foo {
+    color: &'static str,
+}
 impl Component for Foo {
     type Node = web_sys::HtmlParagraphElement;
     fn render(self, document: &Document, children: Vec<Node>) -> Self::Node {
         jsx!(document => {
-            <p style="color: red">{ children }</p>
+            <p style={ format!("color: {}", self.color) }>{ children }</p>
         })
     }
 }

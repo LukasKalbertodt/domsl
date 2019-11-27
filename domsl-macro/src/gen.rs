@@ -162,19 +162,9 @@ fn set_attributes(attrs: &[SnaxAttribute], info: &TagInfo) -> Result<TokenStream
                         quote ! { #lit }
                     }
                     other => {
-                        // We generate this helper function to make sure
-                        // `other` implements `Display`. By using its span, the
-                        // user gets good error message if `Display` is not
-                        // implemented.
-                        let helper = quote_spanned!(other.span()=>
-                            fn #HELPER_IDENT() -> impl std::fmt::Display { #other }
-                        );
-                        quote! {
-                            &{
-                                #helper
-                                #HELPER_IDENT().to_string()
-                            }
-                        }
+                        quote_spanned!(other.span()=>
+                            &::std::string::ToString::to_string(&#other)
+                        )
                     }
                 };
 
