@@ -39,7 +39,7 @@ pub trait NodeKind {
     }
 }
 
-impl<T: AsRef<Node>> NodeKind for &&&&&&&&&&Wrap<'_, T> {}
+impl<T: AsRef<Node>> NodeKind for &&&&&Wrap<'_, T> {}
 
 
 // ===== Second priority: `T: AsRef<str>` ==================================
@@ -58,7 +58,7 @@ pub trait AsStrKind {
     }
 }
 
-impl<T: AsRef<str>> AsStrKind for &&&&&&&&Wrap<'_, T> {}
+impl<T: AsRef<str>> AsStrKind for &&&&Wrap<'_, T> {}
 
 
 // ===== Third priority: `T: Display` ==================================
@@ -78,7 +78,7 @@ pub trait DisplayKind {
 }
 
 // One `&` more for second priority
-impl<T: Display> DisplayKind for &&&&&&Wrap<'_, T> {}
+impl<T: Display> DisplayKind for &&&Wrap<'_, T> {}
 
 
 
@@ -107,7 +107,7 @@ pub trait IterNodeKind {
     }
 }
 
-impl<T: IntoIterator<Item: AsRef<Node>>> IterNodeKind for &&&&Wrap<'_, T> {}
+impl<T: IntoIterator<Item: AsRef<Node>>> IterNodeKind for &&Wrap<'_, T> {}
 
 
 // ===== `T: IntoIterator<Item: AsRef<Node>>` ===============
@@ -134,7 +134,7 @@ pub trait IterStrKind {
     }
 }
 
-impl<T: IntoIterator<Item: AsRef<str>>> IterStrKind for &&Wrap<'_, T> {}
+impl<T: IntoIterator<Item: AsRef<str>>> IterStrKind for &Wrap<'_, T> {}
 
 
 // ===== `T: IntoIterator<Item: Display>` ===============

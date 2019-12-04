@@ -66,7 +66,7 @@ fn gen_item(item: &SnaxItem) -> Result<TokenStream, Error> {
         SnaxItem::Content(tt) => {
             quote! {{
                 let #TMP_IDENT = (#tt);
-                (&&&&&&&&&&&&Wrap(&#TMP_IDENT)).domsl_into_node()
+                (&&&&&Wrap(&#TMP_IDENT)).domsl_into_node()
                     .into_node(#TMP_IDENT, &#DOCUMENT_IDENT)
             }}
         }
