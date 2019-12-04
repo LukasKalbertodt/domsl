@@ -1,12 +1,20 @@
-# `domsl`
+# `domsl`: DOM(ain) Specific Language
 
+This is an experimental crate created for usage in another project of mine.
+Its goal is to provide a simple and concise syntax to create DOM nodes via `web-sys`.
+There are a couple of full blown WASM Rust UI frameworks out there, and a couple of crates that work like this one but create a virtual DOM instead (e.g. [`typed-html`](https://github.com/bodil/typed-html)).
+This crate is not a full UI framework and does not use a virtual or shadow DOM; the macro expands to calls to `web-sys` functions only.
 
-TODO.
+The crate is super unstable still.
+I haven't even released the first version yet.
+If you are interested in this crate, please come back later.
+I will hopefully release (and officially announce) the first version in 2019 still.
+
 
 
 ## Contributing
 
-TODO
+*I am currently not yet accepting PRs!* As soon as I have released the first version, I welcome all kinds of contributions.
 
 **Running the tests**
 
