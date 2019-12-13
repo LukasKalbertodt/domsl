@@ -188,7 +188,6 @@ fn add_children(children: &[SnaxItem]) -> Result<TokenStream, Error> {
 
 const NODE_IDENT: DomslIdent = DomslIdent("__domsl_node");
 const DOCUMENT_IDENT: DomslIdent = DomslIdent("__domsl_document");
-const HELPER_IDENT: DomslIdent = DomslIdent("__domsl_helper");
 const TMP_IDENT: DomslIdent = DomslIdent("__domsl_tmp");
 
 /// This is a small helper type that can be constructed as const-fn and
