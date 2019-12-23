@@ -1,19 +1,28 @@
 use proc_macro2::{Ident, Span, TokenStream, TokenTree};
-use quote::quote_spanned;
+use quote::{quote, quote_spanned};
 
 
 pub(crate) struct Error {
-    pub(crate) error_tokens: TokenStream,
+    error_tokens: TokenStream,
 }
 
 impl Error {
     pub(crate) fn new(span: Span, msg: &str) -> Self {
         let error_tokens = quote_spanned! {span=>
-            {
-                compile_error!(#msg);
-            }
+            compile_error!(#msg);
         };
         Self { error_tokens }
+    }
+
+    pub(crate) fn expr_error_tokens(self) -> TokenStream {
+        let toks = self.error_tokens;
+        quote! {
+            { #toks }
+        }
+    }
+
+    pub(crate) fn stmt_error_tokens(self) -> TokenStream {
+        self.error_tokens
     }
 
     pub(crate) fn expected(expected: &str, found: TokenTree) -> Self {
@@ -60,6 +69,14 @@ impl From<snax::ParseError> for Error {
             snax::ParseError::UnexpectedToken(tt) => {
                 Self::new(tt.span(), &format!("unexpected token `{}`", tt))
             }
+        }
+    }
+}
+
+impl From<syn::Error> for Error {
+    fn from(src: syn::Error) -> Self {
+        Self {
+            error_tokens: src.to_compile_error(),
         }
     }
 }

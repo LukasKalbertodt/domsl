@@ -5,7 +5,7 @@ use web_sys::{Document, Node};
 
 pub mod specialization_hack;
 
-pub use domsl_macro::jsx;
+pub use domsl_macro::{component, jsx};
 
 
 pub trait Component {

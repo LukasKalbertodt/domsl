@@ -50,7 +50,7 @@ pub(crate) fn gen(root: &SnaxItem, document: &Ident) -> Result<TokenStream, Erro
         {
             if starts_lowercase(name) {
                 let ty = TagInfo::from_name(&name)?.type_ident();
-                quote! { .dyn_into::<web_sys::#ty>().unwrap() }
+                quote! { .dyn_into::<::web_sys::#ty>().unwrap() }
             } else {
                 // Components already return the correct type
                 quote! {}
@@ -93,7 +93,7 @@ fn gen_item(item: &SnaxItem) -> Result<TokenStream, Error> {
             quote! {{
                 let #NODE_IDENT = #DOCUMENT_IDENT.create_document_fragment();
                 #add_children
-                web_sys::Node::from(#NODE_IDENT)
+                ::web_sys::Node::from(#NODE_IDENT)
             }}
         }
         SnaxItem::Content(tt) => {
@@ -136,7 +136,7 @@ fn gen_html_tag(
         let #NODE_IDENT = #DOCUMENT_IDENT.create_element(#name_string).unwrap();
         #set_attrs
         #add_children
-        web_sys::Node::from(#NODE_IDENT)
+        ::web_sys::Node::from(#NODE_IDENT)
     }})
 }
 
@@ -169,7 +169,7 @@ fn gen_component(
     );
 
     Ok(quote! {
-        web_sys::Node::from(
+        ::web_sys::Node::from(
             #render_call(
                 #component,
                 #DOCUMENT_IDENT,
